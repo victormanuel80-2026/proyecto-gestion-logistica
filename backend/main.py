@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 import json
 
-from database import get_db, init_db, log_audit
+from database import get_db, init_db, log_audit, bootstrap_db
 from forecasting import run_all_models_and_select_best
 from solver import optimize_parameters_solver
 from ai_assistant import ask_copilot
@@ -31,7 +31,11 @@ app.include_router(crud_router)
 
 @app.on_event("startup")
 def on_startup():
+    bootstrap_db()
     init_db()
+    # Si la BD queda vacía (sin snapshot), cargar datos de demostración.
+    from seed_data import seed_all
+    seed_all()
 
 def _escenario_id(cursor, gestion_id: int, tipo: str) -> int:
     """Devuelve el ID del primer escenario del tipo indicado (o -1 si no existe)."""

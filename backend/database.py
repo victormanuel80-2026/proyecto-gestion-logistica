@@ -3,7 +3,16 @@ import os
 import json
 from datetime import datetime
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "pharma_commercial.db")
+DB_PATH = os.environ.get("DB_PATH") or os.path.join(os.path.dirname(__file__), "pharma_commercial.db")
+# Snapshot de datos incluido en el repositorio; se usa para inicializar la BD en la nube.
+INITIAL_DB_PATH = os.path.join(os.path.dirname(__file__), "data", "pharma_commercial_inicial.db")
+
+def bootstrap_db():
+    """Si la BD no existe (p. ej. primer arranque en Render), copia el snapshot inicial."""
+    if not os.path.exists(DB_PATH) and os.path.exists(INITIAL_DB_PATH):
+        import shutil
+        os.makedirs(os.path.dirname(DB_PATH) or ".", exist_ok=True)
+        shutil.copyfile(INITIAL_DB_PATH, DB_PATH)
 
 def get_db():
     conn = sqlite3.connect(DB_PATH, check_same_thread=False, timeout=15)

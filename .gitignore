@@ -24,6 +24,7 @@ ENV/
 *.sqlite
 *.sqlite3
 backend/*.db
+!backend/data/pharma_commercial_inicial.db
 
 # Environment variables & secrets
 .env

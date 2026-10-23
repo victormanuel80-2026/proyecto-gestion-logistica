@@ -35,6 +35,8 @@ jobs:
           npm ci
 
       - name: Build frontend
+        env:
+          VITE_API_URL: https://pharma-erp-api-victormanuel.onrender.com/api
         run: |
           cd frontend
           npm run build
