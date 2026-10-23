@@ -11,6 +11,7 @@ from solver import optimize_parameters_solver
 from ai_assistant import ask_copilot
 from excel_processor import generate_sample_excel_template, process_excel_import
 from crud import router as crud_router
+import persistence
 
 app = FastAPI(
     title="Commercial Planning & AI Forecasting API",
@@ -29,13 +30,26 @@ app.add_middleware(
 
 app.include_router(crud_router)
 
+# Guardar la BD en GitHub tras cada operación de escritura exitosa (solo en la nube).
+@app.middleware("http")
+async def persist_after_write(request, call_next):
+    response = await call_next(request)
+    if request.method in ("POST", "PUT", "PATCH", "DELETE") and response.status_code < 400:
+        persistence.schedule_backup()
+    return response
+
 @app.on_event("startup")
 def on_startup():
+    persistence.restore_from_github()
     bootstrap_db()
     init_db()
     # Si la BD queda vacía (sin snapshot), cargar datos de demostración.
     from seed_data import seed_all
     seed_all()
+
+@app.on_event("shutdown")
+def on_shutdown():
+    persistence.flush()
 
 def _escenario_id(cursor, gestion_id: int, tipo: str) -> int:
     """Devuelve el ID del primer escenario del tipo indicado (o -1 si no existe)."""
